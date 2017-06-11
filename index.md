@@ -1,40 +1,72 @@
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-    </head>
-    <body>
-        <h1>Hello World</h1>
-        <p>
-            Hey there!
-        </p>
-        <p>
-       <A HREF="login.html"> Login
-       </A>
-        </p>
-    </body>
-</html>
+//login form
+<form id='login' action='login.php' method='post' accept-charset='UTF-8'>
+<fieldset >
+<legend>Login</legend>
+<input type='hidden' name='submitted' id='submitted' value='1'/>
 
-<php>
-// include the AWS client library in your code
-require "aws.phar";
-use AwsCognitoIdentityCognitoIdentityClient;
-use AwsStsStsClient;
+<label for='username' >UserName*:</label>
+<input type='text' name='username' id='username'  maxlength="50" />
 
-// initialize a Cognito identity client using the factory
-$identityClient = CognitoIdentityClient::factory(array(
-    'region'  => 'us-east-1'
-));
+<label for='password' >Password*:</label>
+<input type='password' name='password' id='password' maxlength="50" />
 
-// call the GetId API with the required parameters
-$idResp = $identityClient->getId(array(
-	'AccountId' => 'YOUR_AWS_ACCOUNT_ID',
-	'IdentityPoolId' => 'YOUR_COGNITO_IDENTITY_POOL_ID',
-	// If you are authenticating your users through an identity
-	// provider then you can set the associative array of tokens
-	// in this call
-	// 'Logins' => array(
-	//	'graph.facebook.com' => 'your facebook session token',
-	//)
-));
+<input type='submit' name='Submit' value='Submit' />
 
-</php>
+</fieldset>
+</form>
+
+//check user auth
+function Login()
+{
+    if(empty($_POST['username']))
+    {
+        $this->HandleError("UserName is empty!");
+        return false;
+    }
+    
+    if(empty($_POST['password']))
+    {
+        $this->HandleError("Password is empty!");
+        return false;
+    }
+    
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+    
+    if(!$this->CheckLoginInDB($username,$password))
+    {
+        return false;
+    }
+    
+    session_start();
+    
+    $_SESSION[$this->GetLoginSessionVar()] = $username;
+    
+    return true;
+}
+
+
+//check database for username and password
+function CheckLoginInDB($username,$password)
+{
+    if(!$this->DBLogin())
+    {
+        $this->HandleError("Database login failed!");
+        return false;
+    }          
+    $username = $this->SanitizeForSQL($username);
+    $pwdmd5 = md5($password);
+    $qry = "Select name, email from $this->tablename ".
+        " where username='$username' and password='$pwdmd5' ".
+        " and confirmcode='y'";
+    
+    $result = mysql_query($qry,$this->connection);
+    
+    if(!$result || mysql_num_rows($result) <= 0)
+    {
+        $this->HandleError("Error logging in. ".
+            "The username or password does not match");
+        return false;
+    }
+    return true;
+}
