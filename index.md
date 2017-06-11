@@ -1,72 +1,77 @@
-//login form
-<form id='login' action='login.php' method='post' accept-charset='UTF-8'>
-<fieldset >
-<legend>Login</legend>
-<input type='hidden' name='submitted' id='submitted' value='1'/>
+<?php
+   include("config.php");
+   session_start();
+   
+   if($_SERVER["REQUEST_METHOD"] == "POST") {
+      // username and password sent from form 
+      
+      $myusername = mysqli_real_escape_string($db,$_POST['username']);
+      $mypassword = mysqli_real_escape_string($db,$_POST['password']); 
+      
+      $sql = "SELECT id FROM admin WHERE username = '$myusername' and passcode = '$mypassword'";
+      $result = mysqli_query($db,$sql);
+      $row = mysqli_fetch_array($result,MYSQLI_ASSOC);
+      $active = $row['active'];
+      
+      $count = mysqli_num_rows($result);
+      
+      // If result matched $myusername and $mypassword, table row must be 1 row
+		
+      if($count == 1) {
+         session_register("myusername");
+         $_SESSION['login_user'] = $myusername;
+         
+         header("location: welcome.php");
+      }else {
+         $error = "Your Login Name or Password is invalid";
+      }
+   }
+?>
+<html>
+   
+   <head>
+      <title>Login Page</title>
+      
+      <style type = "text/css">
+         body {
+            font-family:Arial, Helvetica, sans-serif;
+            font-size:14px;
+         }
+         
+         label {
+            font-weight:bold;
+            width:100px;
+            font-size:14px;
+         }
+         
+         .box {
+            border:#666666 solid 1px;
+         }
+      </style>
+      
+   </head>
+   
+   <body bgcolor = "#FFFFFF">
+	
+      <div align = "center">
+         <div style = "width:300px; border: solid 1px #333333; " align = "left">
+            <div style = "background-color:#333333; color:#FFFFFF; padding:3px;"><b>Login</b></div>
+				
+            <div style = "margin:30px">
+               
+               <form action = "" method = "post">
+                  <label>UserName  :</label><input type = "text" name = "username" class = "box"/><br /><br />
+                  <label>Password  :</label><input type = "password" name = "password" class = "box" /><br/><br />
+                  <input type = "submit" value = " Submit "/><br />
+               </form>
+               
+               <div style = "font-size:11px; color:#cc0000; margin-top:10px"><?php echo $error; ?></div>
+					
+            </div>
+				
+         </div>
+			
+      </div>
 
-<label for='username' >UserName*:</label>
-<input type='text' name='username' id='username'  maxlength="50" />
-
-<label for='password' >Password*:</label>
-<input type='password' name='password' id='password' maxlength="50" />
-
-<input type='submit' name='Submit' value='Submit' />
-
-</fieldset>
-</form>
-
-//check user auth
-function Login()
-{
-    if(empty($_POST['username']))
-    {
-        $this->HandleError("UserName is empty!");
-        return false;
-    }
-    
-    if(empty($_POST['password']))
-    {
-        $this->HandleError("Password is empty!");
-        return false;
-    }
-    
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
-    
-    if(!$this->CheckLoginInDB($username,$password))
-    {
-        return false;
-    }
-    
-    session_start();
-    
-    $_SESSION[$this->GetLoginSessionVar()] = $username;
-    
-    return true;
-}
-
-
-//check database for username and password
-function CheckLoginInDB($username,$password)
-{
-    if(!$this->DBLogin())
-    {
-        $this->HandleError("Database login failed!");
-        return false;
-    }          
-    $username = $this->SanitizeForSQL($username);
-    $pwdmd5 = md5($password);
-    $qry = "Select name, email from $this->tablename ".
-        " where username='$username' and password='$pwdmd5' ".
-        " and confirmcode='y'";
-    
-    $result = mysql_query($qry,$this->connection);
-    
-    if(!$result || mysql_num_rows($result) <= 0)
-    {
-        $this->HandleError("Error logging in. ".
-            "The username or password does not match");
-        return false;
-    }
-    return true;
-}
+   </body>
+</html>
