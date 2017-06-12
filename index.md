@@ -1,5 +1,5 @@
 <html>
-npm install auth0-lock
+npm install auth0-lock;
 <!-- Latest patch release (recommended for production) -->
 <script src="http://cdn.auth0.com/js/lock/10.16.0/lock.min.js"></script>
 
